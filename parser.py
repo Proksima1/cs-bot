@@ -12,24 +12,24 @@ def clear_items(row: List[Union[str, str, str, str]]):
     return output
 
 
-def get_data(path_to_file):
-    with open(path_to_file, 'r', encoding='utf-8') as reader:
-        data = list(map(lambda x: x.replace('\t', '').replace('\n', ''), reader.readlines()))[2:-1]
-        count = 0
-        output = []
-        for i in range(len(data)):
-            if i % 6 == 0:
-                output.append(list())
-            output[i // 6].append(data[i])
-        for row in range(len(output)):
-            for item in range(len(output[row])):
-                try:
-                    if output[row][item] in ['{', '}']:
-                        output[row].pop(item)
-                except IndexError:
-                    pass
-        output = list(map(lambda x: clear_items(x), output))
-    return output
+# def get_data(path_to_file):
+#     with open(path_to_file, 'r', encoding='utf-8') as reader:
+#         data = list(map(lambda x: x.replace('\t', '').replace('\n', ''), reader.readlines()))[2:-1]
+#         count = 0
+#         output = []
+#         for i in range(len(data)):
+#             if i % 6 == 0:
+#                 output.append(list())
+#             output[i // 6].append(data[i])
+#         for row in range(len(output)):
+#             for item in range(len(output[row])):
+#                 try:
+#                     if output[row][item] in ['{', '}']:
+#                         output[row].pop(item)
+#                 except IndexError:
+#                     pass
+#         output = list(map(lambda x: clear_items(x), output))
+#     return output
 
 
 def set_time(path_to_file, user: str):
@@ -67,7 +67,7 @@ def get_data(path_to_file):
 
 
 def write_data(path_to_file):
-    s = ''
+    s = '"Users"\n'
     with open(path_to_file, encoding='utf-8') as f:
         text = f.read()
         current_level = 0
@@ -96,11 +96,12 @@ def write_data(path_to_file):
                 else:
                     s += line + '\n'
         s = s.rstrip()
+    print(s)
     with open(path_to_file, mode='w', encoding='utf-8') as w:
         w.write(s)
 
 
 
-# data = write_data(file_path)
+data = write_data(file_path)
 # print(data)
 #set_time(file_path, 'STEAM_0:1:577154573')
