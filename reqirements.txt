@@ -1,0 +1,5 @@
+aiogram
+yoomoney
+beautifulsoup4
+python-dotenv
+requests

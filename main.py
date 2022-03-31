@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from os.path import join, dirname
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from yoomoney import Quickpay, Client
-
 from states import *
 
 dotenv_path = join(dirname(__file__), '.env')
