@@ -1,7 +1,12 @@
-import requests
-from bs4 import BeautifulSoup
+def flatten(lst):
+    for v in lst:
+        if isinstance(v, list):
+            yield from flatten(v)
+        else:
+            yield v
 
-"""STEAM_0:1:577154573"""
-resp = requests.post('https://steamid.io/lookup', data={'input': '1'})
-soup = BeautifulSoup(resp.text, 'html.parser')
-steam_id = soup.find('dl', class_='panel-body').find_all('dd', class_='value')[0].find('a').text
+
+a = ['av', 3, 4, 5, 6]
+b = [7, 8, 9]
+a.insert(-1, b)
+print([*flatten(a)])
