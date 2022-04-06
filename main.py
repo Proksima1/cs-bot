@@ -109,16 +109,16 @@ async def check_payment(query: types.CallbackQuery, state: FSMContext):
                                                          f'Сумма платежа - *{VIP_COST} руб.*\n'
                                                          f'Статус платежа - проверяется🔄', parse_mode='markdown')
     history = client.operation_history(label=label)
-    # for operation in history.operations:
-    # if operation.status.lower() == 'success' and operation.label == label and operation.amount >= VIP_COST:
-    async with state.proxy() as data:
-        write_data(FILE_PATH, data.as_dict()['steam_id'])
-    await asyncio.sleep(2)
-    await message.edit_text(f'Платёж\n\nID платежа - *{label}*\n'
+    for operation in history.operations:
+        if operation.status.lower() == 'success' and operation.label == label and operation.amount >= VIP_COST:
+            async with state.proxy() as data:
+                write_data(FILE_PATH, data.as_dict()['steam_id'])
+            await asyncio.sleep(2)
+            await message.edit_text(f'Платёж\n\nID платежа - *{label}*\n'
                             f'Сумма платежа - *{VIP_COST} руб.*\n'
                             f'Статус платежа - оплачено✅', parse_mode='markdown')
-    await state.finish()
-    await message.answer('VIP-статус выдан ;) Приятной игры!')
+            await state.finish()
+            await message.answer('VIP-статус выдан ;) Приятной игры!')
 
 
 # @dp.message_handler(state=VipPurchase.wait_for_payment)
