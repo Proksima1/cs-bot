@@ -1,37 +1,20 @@
+import ftplib
+import os
 import random
 import re
 import string
 from datetime import datetime
 import calendar
 from datetime import timedelta
-"""2022-04-22 05:02:14"""
-
-# print(datetime.utcfromtimestamp(1651642728).strftime('%Y-%m-%d %H:%M:%S'))
-# print(int(one_month_plus.timestamp()))
+from os.path import join, dirname
+from dotenv import load_dotenv
 
 
-def get_data(path_to_file):
-    with open(path_to_file, encoding='utf-8') as f:
-        text = f.read()
-        items = []
-        current_level = 0
-        for line in text.splitlines():
-            l = line.strip()
-            if l == '{':
-                current_level += 1
-                continue
-            elif l == '}':
-                current_level -= 1
-                continue
-            if current_level == 1:
-                steam_id = l[1:-1]
-                items.append({'steam_id': steam_id})
-            elif current_level == 2:
-                m = re.search(r'"(.+?)"\s+"(.+?)"', l)
-                key, value = m.group(1), m.group(2)
-                print(l)
-                items[-1][key] = value
-    return items
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+SERVER = os.environ.get('SERVER')
+USERNAME = os.environ.get('FTP_USERNAME_CONNECT')
+PASSWORD = os.environ.get('FTP_PASSWORD_CONNECT')
 
 
 def generate_random_string(length):
@@ -60,14 +43,27 @@ def update_time(time):
     return next_month_date
 
 
+def grabFile(session: ftplib.FTP, filename):
+    with open(filename, 'wb') as file:
+        session.retrbinary('RETR ' + filename, file.write, 1024)
+
+
+def placeFile(session: ftplib.FTP, filename):
+    session.storbinary('STOR ' + filename, open(filename, 'rb'))
+
+
 def write_data(path_to_file: str, user_id: str):
+    session = ftplib.FTP(SERVER, USERNAME, PASSWORD)
+    session.cwd('/addons/sourcemod/data/vip/')
     s = ['"Users"']
-    with open(path_to_file, encoding='utf-8') as f:
+    grabFile(session, path_to_file)
+    with open(path_to_file, encoding='utf-8', errors='replace') as f:
         text = f.read()
         current_level = 0
         found = False
         for line in text.splitlines():
             l = line.strip()
+            print(l)
             if l == '{':
                 current_level += 1
                 s.append(line)
@@ -93,6 +89,10 @@ def write_data(path_to_file: str, user_id: str):
             spis = [f'\t"{user_id}"', "\t{", f'\t\t"name"\t\t"{generate_random_string(10)}"',
                     f'\t\t"expires"\t\t"{str(update_time(0))}"', '\t\t"group"\t\t"GOLD"', '\t}']
             s.insert(-1, spis)
+
         s = "\n".join(flatten(s))
     with open(path_to_file, mode='w', encoding='utf-8') as w:
         w.write(s)
+    placeFile(session, path_to_file)
+    session.close()
+    os.remove(path_to_file)

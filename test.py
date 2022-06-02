@@ -1,12 +1,11 @@
-def flatten(lst):
-    for v in lst:
-        if isinstance(v, list):
-            yield from flatten(v)
-        else:
-            yield v
-
-
-a = ['av', 3, 4, 5, 6]
-b = [7, 8, 9]
-a.insert(-1, b)
-print([*flatten(a)])
+import json
+try:
+    with open('statistics.json', 'r+', encoding='utf-8') as reader:
+        data = json.loads(reader.read())
+except FileNotFoundError:
+    open('statistics.json', 'a+').close()
+    data = {'all_came_money': 0, 'buyers_count': 0}
+with open('statistics.json', 'w+', encoding='utf-8') as writer:
+    data['all_came_money'] += 300
+    data['buyers_count'] += 1
+    writer.write(json.dumps(data))
