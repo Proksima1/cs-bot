@@ -4,3 +4,4 @@ yoomoney
 beautifulsoup4
 python-dotenv
 requests
+gunicorn
