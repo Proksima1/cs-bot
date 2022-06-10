@@ -9,7 +9,6 @@ from datetime import timedelta
 from os.path import join, dirname
 from dotenv import load_dotenv
 
-
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 SERVER = os.environ.get('SERVER')
@@ -41,6 +40,15 @@ def update_time(time):
         days = calendar.monthrange(d.year, d.month)[1]
         next_month_date = int((d + timedelta(days=days)).timestamp())
     return next_month_date
+
+
+def is_pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
 
 
 def grabFile(session: ftplib.FTP, filename):
