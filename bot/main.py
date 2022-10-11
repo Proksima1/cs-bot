@@ -1,30 +1,18 @@
 import asyncio
 import logging
-import os
-from os.path import join, dirname
 import requests
-import json
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 from aiogram.utils.exceptions import *
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 from yoomoney import Quickpay, Client
-from states import *
-from utils import generate_random_string, write_data
+from utils import *
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
-TOKEN = os.environ.get('TOKEN')
-PAYMENT_RECEIVER = os.environ.get('PAYMENT_RECEIVER')
-VIP_COST = int(os.environ.get("VIP_COST"))
-YOOMONEY_TOKEN = os.environ.get("YOOMONEY_TOKEN")
+
 client = Client(YOOMONEY_TOKEN)
-FILE_PATH = os.environ.get('FILE_PATH')
-
 bot = Bot(token=TOKEN)
 logging.basicConfig(
     filename='errors.log',
@@ -35,14 +23,11 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 async def on_startup(_):
-    with open('statistics.json', 'a+', encoding='utf-8') as writer:
-        writer.write(json.dumps({'all_came_money': 0, 'buyers_count': 0}))
     print("Bot started!")
 
 
-@dp.message_handler(commands=['stats'], user_id=ADMINS, state=None)
-async def statistic(message: types.Message):
-    await message.answer('Статистика:\nВсего куплено: ')
+async def shutdown(_):
+    pass
 
 
 @dp.message_handler(state=None)
@@ -70,8 +55,9 @@ async def yes_button_clicked(callback_query: types.CallbackQuery):
 async def no_button_clicked(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
     try:
-        await bot.send_message(callback_query.from_user.id, 'Зайди на сервер, напиши в консоль status.'
-                                                            ' Твой SteamID будет в формате [U:х:ххххххх] - это то, что нужно')
+        await bot.send_message(callback_query.from_user.id, 'Зайди на сервер, напиши в консоль <code>status</code>. '
+                                                            'Твой SteamID будет в формате [U:х:ххххххх] - это то, что нужно.'
+                                                            'Пришли его сюда', parse_mode='html')
         await VipPurchase.wait_for_steam_id.set()
     except BotBlocked:
         pass
@@ -79,8 +65,14 @@ async def no_button_clicked(callback_query: types.CallbackQuery):
 
 @dp.message_handler(state=VipPurchase.wait_for_steam_id)
 async def get_steam_id(message: types.Message, state: FSMContext):
-    resp = requests.post('https://steamid.io/lookup', data={'input': message.text}).text
-    soup = BeautifulSoup(resp, 'html.parser')
+    resp = requests.post('https://steamid.io/lookup', data={'input': message.text})
+    if resp.status_code != 200:
+        await message.answer('🔧В работе бота возникли технические неполадки, пожалуйста, повторите попытку позже!')
+        for admin in ADMINS:
+            await bot.send_message(admin, '<b>Ошибка при работе бота!\nС сайтом steamid проблема</b>', parse_mode='html')
+        return
+    text_response = resp.text
+    soup = BeautifulSoup(text_response, 'html.parser')
     try:
         steam_id = soup.find('dl', class_='panel-body').find_all('dd', class_='value')[0].find('a').text
     except AttributeError:
@@ -105,7 +97,8 @@ async def get_steam_id(message: types.Message, state: FSMContext):
         buttons_row.add(InlineKeyboardButton('Проверить оплату', callback_data='check_payment'))
         buttons_row.add(InlineKeyboardButton("Назад", callback_data='go_back'))
         try:
-            await message.answer(f'Теперь произведи оплату. \nID вашего платежа: {s}', reply_markup=buttons_row)
+            await message.answer(f'Теперь произведи оплату. \nID вашего платежа: <code>{s}</code>', reply_markup=buttons_row,
+                                 parse_mode='html')
             await VipPurchase.wait_for_payment.set()
         except BotBlocked:
             pass
@@ -128,9 +121,8 @@ async def check_pay(message, label: str, state, steam_id):
                 write_data(FILE_PATH, steam_id)
                 try:
                     await message.edit_reply_markup()
-                    await message.edit_text(f'Платёж\n\nID платежа - *{label}*\n'
-                                            f'Сумма платежа - *{VIP_COST} руб.*\n'
-                                            f'Статус платежа - оплачено✅', parse_mode='markdown')
+                    message_text = payment.format(label, 'оплачено✅')
+                    await message.edit_text(message_text, parse_mode='html')
                     await state.finish()
                     await message.answer('VIP-статус выдан ;) Приятной игры!')
                 except BotBlocked:
@@ -139,9 +131,8 @@ async def check_pay(message, label: str, state, steam_id):
         await asyncio.sleep(2)
     else:
         try:
-            await message.edit_text(f'Платёж\n\nID платежа - *{label}*\n'
-                                    f'Сумма платежа - *{VIP_COST} руб.*\n'
-                                    f'Статус платежа - не найдено❌', parse_mode='markdown')
+            message_text = payment.format(label, 'не найдено❌')
+            await message.edit_text(message_text, parse_mode='html')
             await message.edit_reply_markup(InlineKeyboardMarkup().add(InlineKeyboardButton('Проверить снова',
                                                                                             callback_data='check_payment_again')))
         except BotBlocked:
@@ -158,9 +149,8 @@ async def check_payment(query: types.CallbackQuery, state: FSMContext):
     try:
         await query.message.edit_reply_markup(InlineKeyboardMarkup().add(InlineKeyboardButton('Перейти в youmoney',
                                                                                               url=redir_url)))
-        message = await bot.send_message(query.from_user.id, f'Платёж\n\nID платежа - *{label}*\n'
-                                                             f'Сумма платежа - *{VIP_COST} руб.*\n'
-                                                             f'Статус платежа - проверяется🔄', parse_mode='markdown')
+        message_text = payment.format(label, 'проверяется🔄')
+        message = await bot.send_message(query.from_user.id, message_text, parse_mode='html')
         await check_pay(message, label, state, steam_id)
     except BotBlocked:
         pass
@@ -173,13 +163,12 @@ async def check_payment_again(query: types.CallbackQuery, state: FSMContext):
         label = d['label']
         steam_id = d['steam_id']
     try:
-        await query.message.edit_text(f'Платёж\n\nID платежа - *{label}*\n'
-                                      f'Сумма платежа - *{VIP_COST} руб.*\n'
-                                      f'Статус платежа - проверяется🔄', parse_mode='markdown')
+        message_text = payment.format(label, 'проверяется🔄')
+        await query.message.edit_text(message_text, parse_mode='html')
     except BotBlocked:
         pass
     await check_pay(query.message, label, state, steam_id)
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
+    executor.start_polling(dp, skip_updates=True, on_startup=on_startup, on_shutdown=shutdown)
