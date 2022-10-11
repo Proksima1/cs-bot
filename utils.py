@@ -8,7 +8,6 @@ import calendar
 from datetime import timedelta
 from os.path import join, dirname
 from dotenv import load_dotenv
-from threading import Thread
 
 
 dotenv_path = join(dirname(__file__), '.env')

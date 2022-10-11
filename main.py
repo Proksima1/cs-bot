@@ -2,8 +2,8 @@ import asyncio
 import logging
 import os
 from os.path import join, dirname
-
 import requests
+import json
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -13,7 +13,6 @@ from aiogram.utils.exceptions import *
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from yoomoney import Quickpay, Client
-
 from states import *
 from utils import generate_random_string, write_data
 
@@ -36,7 +35,14 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 async def on_startup(_):
+    with open('statistics.json', 'a+', encoding='utf-8') as writer:
+        writer.write(json.dumps({'all_came_money': 0, 'buyers_count': 0}))
     print("Bot started!")
+
+
+@dp.message_handler(commands=['stats'], user_id=ADMINS, state=None)
+async def statistic(message: types.Message):
+    await message.answer('Статистика:\nВсего куплено: ')
 
 
 @dp.message_handler(state=None)
