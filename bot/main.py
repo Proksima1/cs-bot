@@ -1,6 +1,8 @@
 import asyncio
+import concurrent
 import logging
-import requests
+
+import aiohttp
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -8,9 +10,9 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 from aiogram.utils.exceptions import *
 from bs4 import BeautifulSoup
-from yoomoney import Quickpay, Client
+from yoomoney import Client
 from utils import *
-
+from config import *
 
 client = Client(YOOMONEY_TOKEN)
 bot = Bot(token=TOKEN)
@@ -20,7 +22,8 @@ logging.basicConfig(
     level=logging.INFO
 )
 dp = Dispatcher(bot, storage=MemoryStorage())
-
+back_button = InlineKeyboardButton("⬅️ Назад", callback_data='go_back')
+pool = concurrent.futures.ThreadPoolExecutor()
 
 async def on_startup(_):
     print("Bot started!")
@@ -36,7 +39,7 @@ async def send_welcome(message: types.Message):
     no_button = InlineKeyboardButton('Нет', callback_data='no')
     buttons_row = InlineKeyboardMarkup().add(yes_button, no_button)
     await message.answer(
-        f"Привет. Хочешь VIP? Стоимость VIP <b>{VIP_COST}руб</b>. Нужен твой SteamID в любом формате, например:"
+        f"👋Привет. Хочешь VIP? Стоимость VIP <b>{VIP_COST}руб</b>. Нужен твой SteamID в любом формате, например:"
         " \n\nSteam ID: STEAM_0:1:998772\nSteam3: [U:1:1997545]\nCommunity ID: 76561197962263273", parse_mode='html')
     await message.answer('Знаешь свой SteamID?', reply_markup=buttons_row)
 
@@ -65,48 +68,53 @@ async def no_button_clicked(callback_query: types.CallbackQuery):
 
 @dp.message_handler(state=VipPurchase.wait_for_steam_id)
 async def get_steam_id(message: types.Message, state: FSMContext):
-    resp = requests.post('https://steamid.io/lookup', data={'input': message.text})
-    if resp.status_code != 200:
+    loop = asyncio.get_event_loop()
+    client = aiohttp.ClientSession(loop=loop)
+    resp = await client.post('https://steamid.io/lookup', data={'input': message.text})
+    if resp.status != 200:
         await message.answer('🔧В работе бота возникли технические неполадки, пожалуйста, повторите попытку позже!')
         for admin in ADMINS:
-            await bot.send_message(admin, '<b>Ошибка при работе бота!\nС сайтом steamid проблема</b>', parse_mode='html')
+            await bot.send_message(admin, '<b>Ошибка при работе бота!\nС сайтом steamid проблема</b>',
+                                   parse_mode='html')
         return
-    text_response = resp.text
+    text_response = await resp.text()
     soup = BeautifulSoup(text_response, 'html.parser')
     try:
         steam_id = soup.find('dl', class_='panel-body').find_all('dd', class_='value')[0].find('a').text
     except AttributeError:
         await message.answer("Такого steam_id не найдено, попробуй ввести другой.")
     else:
-        s = generate_random_string(10)
+        s = await generate_random_string(10)
         buttons_row = InlineKeyboardMarkup()
-        quickpay = Quickpay(
+        async with Quickpay(
             receiver=PAYMENT_RECEIVER,
             quickpay_form="shop",
             targets="Покупка VIP",
             paymentType="SB",
             label=s,
             sum=VIP_COST,
-        )
-        async with state.proxy() as data:
-            data['steam_id'] = steam_id
-            data['label'] = s
-            data['redirect_url'] = quickpay.redirected_url
-        buttons_row.add(InlineKeyboardButton('Перейти в youmoney',
-                                             url=quickpay.redirected_url))
-        buttons_row.add(InlineKeyboardButton('Проверить оплату', callback_data='check_payment'))
-        buttons_row.add(InlineKeyboardButton("Назад", callback_data='go_back'))
-        try:
-            await message.answer(f'Теперь произведи оплату. \nID вашего платежа: <code>{s}</code>', reply_markup=buttons_row,
-                                 parse_mode='html')
-            await VipPurchase.wait_for_payment.set()
-        except BotBlocked:
-            pass
+        ) as quickpay:
+            async with state.proxy() as data:
+                data['steam_id'] = steam_id
+                data['label'] = s
+                data['redirect_url'] = quickpay.redirected_url
+            buttons_row.add(InlineKeyboardButton('Перейти в youmoney',
+                                                 url=quickpay.redirected_url))
+            buttons_row.add(InlineKeyboardButton('🔍 Проверить оплату', callback_data='check_payment'))
+            buttons_row.add(back_button)
+            try:
+                await message.answer(f'Теперь произведи оплату. \nID вашего платежа: <code>{s}</code>',
+                                     reply_markup=buttons_row,
+                                     parse_mode='html')
+                await VipPurchase.wait_for_payment.set()
+            except BotBlocked:
+                pass
 
 
 @dp.callback_query_handler(lambda c: c.data == 'go_back', state=VipPurchase.wait_for_payment)
 async def go_back(query: types.CallbackQuery):
     await VipPurchase.wait_for_steam_id.set()
+    await bot.answer_callback_query(query.id)
     try:
         await query.message.answer('Пришли мне свой Steam ID.')
     except BotBlocked:
@@ -133,14 +141,18 @@ async def check_pay(message, label: str, state, steam_id):
         try:
             message_text = payment.format(label, 'не найдено❌')
             await message.edit_text(message_text, parse_mode='html')
-            await message.edit_reply_markup(InlineKeyboardMarkup().add(InlineKeyboardButton('Проверить снова',
-                                                                                            callback_data='check_payment_again')))
+            await message.edit_reply_markup(InlineKeyboardMarkup().add(
+                InlineKeyboardButton('🔍 Проверить снова',
+                                     callback_data='check_payment_again'),
+                back_button
+            ))
         except BotBlocked:
             pass
 
 
 @dp.callback_query_handler(lambda c: c.data == 'check_payment', state=VipPurchase.wait_for_payment)
 async def check_payment(query: types.CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(query.id)
     async with state.proxy() as data:
         d = data.as_dict()
         label = d['label']
@@ -158,6 +170,7 @@ async def check_payment(query: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(lambda c: c.data == 'check_payment_again', state=VipPurchase.wait_for_payment)
 async def check_payment_again(query: types.CallbackQuery, state: FSMContext):
+    await bot.answer_callback_query(query.id)
     async with state.proxy() as data:
         d = data.as_dict()
         label = d['label']

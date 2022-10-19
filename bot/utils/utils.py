@@ -4,7 +4,6 @@ import random
 import re
 import string
 from datetime import datetime
-import calendar
 from datetime import timedelta
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -17,7 +16,7 @@ USERNAME = os.environ.get('FTP_USERNAME_CONNECT')
 PASSWORD = os.environ.get('FTP_PASSWORD_CONNECT')
 
 
-def generate_random_string(length):
+async def generate_random_string(length):
     letters_and_digits = string.ascii_letters + string.digits
     rand_string = ''.join(random.sample(letters_and_digits, length))
     return rand_string
