@@ -1,10 +1,21 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Админ панель</title>
+{% extends "base.html" %}
+{% block css %}
+<link rel="stylesheet" href="{{url_for("static", filename='css/main.css')}}">
+{% endblock %}
+{% block js %}
+<script type="text/javascript" src="{{url_for("static", filename='js/main.js')}}"></script>
+{% endblock %}
 </head>
 <body>
-<h1>Hello, your ip is {{ip}}</h1>
-</body>
-</html>
+{% block content%}
+  <div class="identification" id="identification">
+    <form action="/auth" method="post" class="identification__form" id="identification_form">
+      <h2 class="identification__title">Авторизация в админ-панели</h2>
+      {{ form.csrf_token  }}
+      {{ form.email(class="identification__email", type="text", placeholder="Введите почту:") }}
+      {{ form.password(class="identification__password", placeholder="Введите пароль:") }}
+      {{ form.submit(class="identification__button") }}
+
+    </form>
+  </div>
+{% endblock %}

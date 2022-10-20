@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block css %}
+	<link rel="stylesheet" href="{{url_for("static", filename="css/home.css")}}">
+{% endblock css %}
+
+{% block content %}
+	<div class="controls" id="controls">
+		<div class="controls__form">
+			<h2 class="controls__title">Настройки бота</h2>
+			<div class="controls__toggle_block">
+				<p class="contols__p">Управление ботом</p>
+				<div class="toggleWrapper">
+				  <input type="checkbox" name="toggle1" class="mobileToggle" id="toggle1">
+				  <label for="toggle1"></label>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock content %}

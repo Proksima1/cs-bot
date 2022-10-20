@@ -5,3 +5,8 @@ beautifulsoup4
 python-dotenv
 requests
 gunicorn
+sqlalchemy
+sqlalchemy_serializer
+flask_sqlalchemy
+psycopg2-binary
+flask_login

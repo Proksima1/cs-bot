@@ -1,0 +1,31 @@
+.identification {
+  position: absolute;
+  top: 50%;
+  transform: translate(0, -50%);
+}
+
+.identification__form {
+  display: -webkit-flex;
+  display: -ms-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  background-color: #6799c7;
+  border: 4px solid #6291bd;
+  box-shadow: 0 0 5px;
+  border-radius: 5px;
+  padding: 10px 20px;
+}
+.identification__form>*{
+  margin: 5px 0;
+}
+
+.identification__title {
+  text-align: center;
+  font-family: Fulbo;
+}
+.identification__button{
+  padding: 4px 7px;
+}

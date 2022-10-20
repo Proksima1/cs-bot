@@ -13,8 +13,8 @@ from aiogram.utils.exceptions import *
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from yoomoney import Quickpay, Client
-from states import *
-from utils import generate_random_string, write_data, is_pid_alive
+from .states import *
+from .utils import generate_random_string, write_data, is_pid_alive
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -24,7 +24,6 @@ VIP_COST = int(os.environ.get("VIP_COST"))
 YOOMONEY_TOKEN = os.environ.get("YOOMONEY_TOKEN")
 client = Client(YOOMONEY_TOKEN)
 FILE_PATH = os.environ.get('FILE_PATH')
-ADMINS = list(map(int, os.environ.get('ADMINS').split(',')))
 
 bot = Bot(token=TOKEN)
 # logging.basicConfig(
@@ -36,14 +35,7 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 async def on_startup(_):
-    with open('statistics.json', 'a+', encoding='utf-8') as writer:
-        writer.write(json.dumps({'all_came_money': 0, 'buyers_count': 0}))
     print("Bot started!")
-
-
-@dp.message_handler(commands=['stats'], user_id=ADMINS, state=None)
-async def statistic(message: types.Message):
-    await message.answer('Статистика:\nВсего куплено: ')
 
 
 @dp.message_handler(state=None)
@@ -121,19 +113,6 @@ async def go_back(query: types.CallbackQuery):
         pass
 
 
-async def add_stats():
-    try:
-        with open('statistics.json', 'r+', encoding='utf-8') as reader:
-            data = json.loads(reader.read())
-    except FileNotFoundError:
-        open('statistics.json', 'a+').close()
-        data = {'all_came_money': 0, 'buyers_count': 0}
-    with open('statistics.json', 'w+', encoding='utf-8') as writer:
-        data['all_came_money'] += 300
-        data['buyers_count'] += 1
-        writer.write(json.dumps(data))
-
-
 async def check_pay(message, label: str, state, steam_id):
     for i in range(20):
         history = client.operation_history(label=label)
@@ -196,5 +175,5 @@ async def check_payment_again(query: types.CallbackQuery, state: FSMContext):
     await check_pay(query.message, label, state, steam_id)
 
 
-# if __name__ == '__main__':
-#     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

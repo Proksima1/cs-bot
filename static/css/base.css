@@ -1,0 +1,46 @@
+@font-face {
+  font-family: 'Fulbo';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Fulbo-Argenta'),
+    url('../fonts/Fulbo/Fulbo-Argenta.otf') format('woff2');
+}
+@import url(https://allfont.ru/allfont.css?fonts=aardvark-normal);
+:root {
+  --color-primary: #7ab1e6;
+  --color-header: #94c5f2;
+}
+
+*,:before,:after{
+  font-family: 'Aardvark Normal', arial;
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+  -webkit-transition: .25s ease-in-out;
+  outline:none;
+  box-sizing:border-box;
+}
+
+body {
+  background-color: var(--color-primary);
+}
+.header{
+  background-color: var(--color-header);
+  box-shadow: 0 2px 6px #bedcf7;
+  padding: 5px 0;
+}
+.header>.wrapper{
+  justify-content: space-around;
+}
+.header__link{
+  text-decoration: none;
+  color: black;
+}
+
+.wrapper {
+  margin: auto 200px;
+  display: -webkit-flex;
+  display: -ms-flex;
+  display: flex;
+  justify-content: center;
+}
