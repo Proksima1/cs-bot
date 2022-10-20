@@ -4,6 +4,7 @@ import random
 import re
 import string
 from datetime import datetime
+import calendar
 from datetime import timedelta
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -15,7 +16,7 @@ USERNAME = os.environ.get('FTP_USERNAME_CONNECT')
 PASSWORD = os.environ.get('FTP_PASSWORD_CONNECT')
 
 
-async def generate_random_string(length):
+def generate_random_string(length):
     letters_and_digits = string.ascii_letters + string.digits
     rand_string = ''.join(random.sample(letters_and_digits, length))
     return rand_string
@@ -66,7 +67,6 @@ def write_data(path_to_file: str, user_id: str):
     grabFile(session, path_to_file)
     with open(path_to_file, encoding='utf-8', errors='replace') as f:
         text = f.read()
-        print(text)
         current_level = 0
         found = False
         for line in text.splitlines():
