@@ -1,0 +1,15 @@
+<<<<<<< HEAD:bot/requirements.txt
+aiogram==2.22.2
+yoomoney==0.1.0
+beautifulsoup4==4.11.1
+python-dotenv==0.21.0
+requests==2.28.1
+=======
+flask
+aiogram
+yoomoney
+beautifulsoup4
+python-dotenv
+requests
+gunicorn
+>>>>>>> parent of 09e0c66 (.):requirements.txt

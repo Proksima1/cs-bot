@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 <<<<<<<< HEAD:bot/main_bot.py
 from dotenv import load_dotenv
 from yoomoney import Quickpay, Client
+<<<<<<< HEAD:bot/main_bot.py
 from .states import *
 from .utils import generate_random_string, write_data, is_pid_alive
 ========
@@ -20,10 +21,15 @@ from yoomoney import Client
 from utils import *
 from config import *
 >>>>>>>> b47e96b5dc7f1f8e179fc1627d770f48d9687211:bot/main.py
+=======
+from states import *
+from utils import generate_random_string, write_data, is_pid_alive
+>>>>>>> parent of 09e0c66 (.):bot.py
 
 client = Client(YOOMONEY_TOKEN)
 <<<<<<<< HEAD:bot/main_bot.py
 FILE_PATH = os.environ.get('FILE_PATH')
+ADMINS = list(map(int, os.environ.get('ADMINS').split(',')))
 
 ========
 >>>>>>>> b47e96b5dc7f1f8e179fc1627d770f48d9687211:bot/main.py
@@ -38,9 +44,12 @@ back_button = InlineKeyboardButton("⬅️ Назад", callback_data='go_back')
 pool = concurrent.futures.ThreadPoolExecutor()
 
 async def on_startup(_):
+    with open('statistics.json', 'a+', encoding='utf-8') as writer:
+        writer.write(json.dumps({'all_came_money': 0, 'buyers_count': 0}))
     print("Bot started!")
 
 
+<<<<<<< HEAD:bot/main_bot.py
 <<<<<<<< HEAD:bot/main_bot.py
 ========
 async def shutdown(_):
@@ -48,6 +57,13 @@ async def shutdown(_):
 
 
 >>>>>>>> b47e96b5dc7f1f8e179fc1627d770f48d9687211:bot/main.py
+=======
+@dp.message_handler(commands=['stats'], user_id=ADMINS, state=None)
+async def statistic(message: types.Message):
+    await message.answer('Статистика:\nВсего куплено: ')
+
+
+>>>>>>> parent of 09e0c66 (.):bot.py
 @dp.message_handler(state=None)
 async def send_welcome(message: types.Message):
     yes_button = InlineKeyboardButton('Да', callback_data='yes')
@@ -136,6 +152,19 @@ async def go_back(query: types.CallbackQuery):
         pass
 
 
+async def add_stats():
+    try:
+        with open('statistics.json', 'r+', encoding='utf-8') as reader:
+            data = json.loads(reader.read())
+    except FileNotFoundError:
+        open('statistics.json', 'a+').close()
+        data = {'all_came_money': 0, 'buyers_count': 0}
+    with open('statistics.json', 'w+', encoding='utf-8') as writer:
+        data['all_came_money'] += 300
+        data['buyers_count'] += 1
+        writer.write(json.dumps(data))
+
+
 async def check_pay(message, label: str, state, steam_id):
     for i in range(20):
         history = client.operation_history(label=label)
@@ -198,5 +227,10 @@ async def check_payment_again(query: types.CallbackQuery, state: FSMContext):
     await check_pay(query.message, label, state, steam_id)
 
 
+<<<<<<< HEAD:bot/main_bot.py
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup, on_shutdown=shutdown)
+=======
+# if __name__ == '__main__':
+#     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
+>>>>>>> parent of 09e0c66 (.):bot.py
