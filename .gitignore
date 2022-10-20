@@ -1,7 +1,6 @@
-
-*.env
+/__pychahe__
 *.log
 *.pyc
 .env
-.env
-statistics.json
+*.pyc
+test.py

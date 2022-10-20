@@ -34,7 +34,6 @@ class Quickpay:
         self.need_email = need_email
         self.need_phone = need_phone
         self.need_address = need_address
-
         self.response = None
 
     async def __aenter__(self):
@@ -77,7 +76,8 @@ class Quickpay:
         self.base_url = self.base_url[:-1].replace(" ", "%20")
 
         # response = requests.request("POST", self.base_url)
-        async with aiohttp.ClientSession(loop=asyncio.get_event_loop()) as client:
+
+        async with aiohttp.ClientSession(loop=asyncio.get_event_loop(), trust_env=True) as client:
             response = await client.post(self.base_url)
 
         self.redirected_url = str(response.url)

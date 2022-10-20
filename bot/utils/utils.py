@@ -4,19 +4,19 @@ import random
 import re
 import string
 from datetime import datetime
-import calendar
 from datetime import timedelta
 from os.path import join, dirname
 from dotenv import load_dotenv
 
-dotenv_path = join(dirname(__file__), '../.env')
+
+dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 SERVER = os.environ.get('SERVER')
 USERNAME = os.environ.get('FTP_USERNAME_CONNECT')
 PASSWORD = os.environ.get('FTP_PASSWORD_CONNECT')
 
 
-def generate_random_string(length):
+async def generate_random_string(length):
     letters_and_digits = string.ascii_letters + string.digits
     rand_string = ''.join(random.sample(letters_and_digits, length))
     return rand_string
@@ -42,15 +42,6 @@ def update_time(time):
     return next_month_date
 
 
-def is_pid_alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except OSError:
-        return False
-    else:
-        return True
-
-
 def grabFile(session: ftplib.FTP, filename):
     with open(filename, 'wb') as file:
         session.retrbinary('RETR ' + filename, file.write, 1024)
@@ -67,6 +58,7 @@ def write_data(path_to_file: str, user_id: str):
     grabFile(session, path_to_file)
     with open(path_to_file, encoding='utf-8', errors='replace') as f:
         text = f.read()
+        print(text)
         current_level = 0
         found = False
         for line in text.splitlines():

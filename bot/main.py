@@ -6,57 +6,51 @@ import aiohttp
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils import executor
 from aiogram.utils.exceptions import *
 from bs4 import BeautifulSoup
-<<<<<<<< HEAD:bot/main_bot.py
-from dotenv import load_dotenv
-from yoomoney import Quickpay, Client
-from .states import *
-from .utils import generate_random_string, write_data, is_pid_alive
-========
 from yoomoney import Client
 from utils import *
 from config import *
->>>>>>>> b47e96b5dc7f1f8e179fc1627d770f48d9687211:bot/main.py
 
 client = Client(YOOMONEY_TOKEN)
-<<<<<<<< HEAD:bot/main_bot.py
-FILE_PATH = os.environ.get('FILE_PATH')
-
-========
->>>>>>>> b47e96b5dc7f1f8e179fc1627d770f48d9687211:bot/main.py
 bot = Bot(token=TOKEN)
-# logging.basicConfig(
-#     filename='errors.log',
-#     format='%(asctime)s %(levelname)s %(name)s %(message)s',
-#     level=logging.WARNING
-# )
+logging.basicConfig(
+    filename='errors.log',
+    format='%(asctime)s %(levelname)s %(name)s %(message)s',
+    level=logging.INFO
+)
 dp = Dispatcher(bot, storage=MemoryStorage())
 back_button = InlineKeyboardButton("⬅️ Назад", callback_data='go_back')
-pool = concurrent.futures.ThreadPoolExecutor()
+policy = asyncio.WindowsSelectorEventLoopPolicy()
+asyncio.set_event_loop_policy(policy)
+
 
 async def on_startup(_):
     print("Bot started!")
 
 
-<<<<<<<< HEAD:bot/main_bot.py
-========
 async def shutdown(_):
     pass
 
 
->>>>>>>> b47e96b5dc7f1f8e179fc1627d770f48d9687211:bot/main.py
 @dp.message_handler(state=None)
 async def send_welcome(message: types.Message):
     yes_button = InlineKeyboardButton('Да', callback_data='yes')
     no_button = InlineKeyboardButton('Нет', callback_data='no')
     buttons_row = InlineKeyboardMarkup().add(yes_button, no_button)
+    # a = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton('Меню'))
     await message.answer(
         f"👋Привет. Хочешь VIP? Стоимость VIP <b>{VIP_COST}руб</b>. Нужен твой SteamID в любом формате, например:"
         " \n\nSteam ID: STEAM_0:1:998772\nSteam3: [U:1:1997545]\nCommunity ID: 76561197962263273", parse_mode='html')
     await message.answer('Знаешь свой SteamID?', reply_markup=buttons_row)
+
+
+@dp.message_handler(state="*", commands=['help'])
+async def help(message: types.Message):
+    await message.answer('ℹИнформация о боте:\n'
+                         'Версия бота')
 
 
 @dp.callback_query_handler(lambda c: c.data == 'yes', state=None)
@@ -84,7 +78,7 @@ async def no_button_clicked(callback_query: types.CallbackQuery):
 @dp.message_handler(state=VipPurchase.wait_for_steam_id)
 async def get_steam_id(message: types.Message, state: FSMContext):
     loop = asyncio.get_event_loop()
-    client = aiohttp.ClientSession(loop=loop)
+    client = aiohttp.ClientSession(loop=loop, trust_env=True)
     resp = await client.post('https://steamid.io/lookup', data={'input': message.text})
     if resp.status != 200:
         await message.answer('🔧В работе бота возникли технические неполадки, пожалуйста, повторите попытку позже!')
