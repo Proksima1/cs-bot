@@ -3,6 +3,7 @@ import os
 import random
 import re
 import string
+import calendar
 from datetime import datetime
 from datetime import timedelta
 from os.path import join, dirname
@@ -16,7 +17,13 @@ USERNAME = os.environ.get('FTP_USERNAME_CONNECT')
 PASSWORD = os.environ.get('FTP_PASSWORD_CONNECT')
 
 
-async def generate_random_string(length):
+async def async_generate_random_string(length):
+    letters_and_digits = string.ascii_letters + string.digits
+    rand_string = ''.join(random.sample(letters_and_digits, length))
+    return rand_string
+
+
+def sync_generate_random_name(length):
     letters_and_digits = string.ascii_letters + string.digits
     rand_string = ''.join(random.sample(letters_and_digits, length))
     return rand_string
@@ -58,12 +65,10 @@ def write_data(path_to_file: str, user_id: str):
     grabFile(session, path_to_file)
     with open(path_to_file, encoding='utf-8', errors='replace') as f:
         text = f.read()
-        print(text)
         current_level = 0
         found = False
         for line in text.splitlines():
             l = line.strip()
-            print(l)
             if l == '{':
                 current_level += 1
                 s.append(line)
@@ -86,7 +91,7 @@ def write_data(path_to_file: str, user_id: str):
                 else:
                     s.append(line)
         if found is not None:
-            spis = [f'\t"{user_id}"', "\t{", f'\t\t"name"\t\t"{generate_random_string(10)}"',
+            spis = [f'\t"{user_id}"', "\t{", f'\t\t"name"\t\t"{sync_generate_random_name(10)}"',
                     f'\t\t"expires"\t\t"{str(update_time(0))}"', '\t\t"group"\t\t"GOLD"', '\t}']
             s.insert(-1, spis)
 
@@ -96,3 +101,7 @@ def write_data(path_to_file: str, user_id: str):
     placeFile(session, path_to_file)
     session.close()
     os.remove(path_to_file)
+
+
+if __name__ == '__main__':
+    write_data("users.ini", 'STEAM_0:1:998772')
