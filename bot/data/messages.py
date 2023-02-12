@@ -1,4 +1,4 @@
-from config import VIP_COST, VERSION
+from .config import VIP_COST, VERSION
 
 payment_message = 'Покупка Vip на месяц \nID - <code><b>{0}</b></code>\n' \
                   f'Сумма платежа - <b>{VIP_COST} руб.</b>\n' \

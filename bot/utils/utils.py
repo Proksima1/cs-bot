@@ -1,3 +1,4 @@
+import asyncio
 import ftplib
 import os
 import random
@@ -7,6 +8,9 @@ import calendar
 from datetime import datetime
 from datetime import timedelta
 from os.path import join, dirname
+
+import aiohttp
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 
@@ -101,6 +105,23 @@ def write_data(path_to_file: str, user_id: str):
     placeFile(session, path_to_file)
     session.close()
     os.remove(path_to_file)
+
+
+async def search_for_steam_id(id_text, text=None):
+    loop = asyncio.get_event_loop()
+    async with aiohttp.ClientSession(loop=loop, trust_env=True) as client:
+        resp = await client.post('https://steamid.io/lookup', data={'input': id_text})
+    if resp.status != 200:
+        return {'status': 'error', 'text': text}
+    text_response = await resp.text()
+    soup = BeautifulSoup(text_response, 'html.parser')
+    try:
+        steam_id = soup.find('dl', class_='panel-body').find_all('dd', class_='value')[0].find('a').text
+        return {'status': 'success',
+                'text': steam_id}
+    except AttributeError:
+        return {'status': 'success',
+                'text': '0'}
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ from os.path import join, dirname
 
 from dotenv import load_dotenv
 
-dotenv_path = join(dirname(__file__), 'utils/.env')
+dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 TOKEN = os.environ.get('TOKEN')
 PAYMENT_RECEIVER = os.environ.get('PAYMENT_RECEIVER')
