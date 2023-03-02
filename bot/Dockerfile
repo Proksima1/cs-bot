@@ -5,8 +5,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get autoremove && apt-get autocl
 RUN mkdir /bot
 COPY . /bot
 WORKDIR /bot
-
+VOLUME /opt/app/data
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "app.py"]

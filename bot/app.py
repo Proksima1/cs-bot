@@ -4,7 +4,7 @@ from aiogram import executor
 
 from handlers import dp
 from db.database import create_base
-from db.sql_commands import select_admins, set_admin
+from db.sql_commands import set_admin
 
 
 async def on_startup(dp):
@@ -20,4 +20,4 @@ if __name__ == '__main__':
         level=logging.INFO
     )
 
-    executor.start_polling(dp, on_startup=on_startup)
+    executor.start_polling(dp, on_startup=on_startup, skip_updates=True)

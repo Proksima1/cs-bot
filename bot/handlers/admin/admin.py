@@ -32,9 +32,9 @@ async def admin_enter_panel(callback_query: types.CallbackQuery, state: FSMConte
 
 
 @dp.callback_query_handler(lambda c: c.data == 'do_mail', state=AdminPanel.main)
-async def mail(message: types.Message):
-    await message.answer(
-        '💌 Отправьте сообщение для рассылки:'
+async def mail(cb: types.CallbackQuery):
+    await cb.message.answer(
+        '✉️ Отправьте сообщение для рассылки:'
     )
     await AdminPanel.get_mail_text.set()
 
@@ -47,12 +47,13 @@ async def mail_on(message: types.Message, state: FSMContext):
             try:
                 await dp.bot.send_message(
                     chat_id=user.user_id,
-                    text=message.html_text
+                    text=message.html_text,
+                    parse_mode='MarkdownV2'
                 )
                 add_log(f'Send message to {user.user_id}')
                 await sleep(0.33)
             except Exception as e:
-                add_log(e)
+                add_log(str(e))
         else:
             add_log('Рассылка завершена')
             await message.answer(
@@ -66,13 +67,15 @@ async def mail_on(message: types.Message, state: FSMContext):
                 await dp.bot.send_photo(
                     chat_id=user.user_id,
                     photo=message.photo[-1].file_id,
-                    caption=message.html_text if message.caption else None
+                    caption=message.html_text if message.caption else None,
+                    parse_mode='MarkdownV2'
                 )
                 add_log(f'Send message to {user.user_id}')
 
                 await sleep(0.33)
-            except Exception:
-                pass
+            except Exception as e:
+                add_log(str(e))
+                # pass
         else:
             add_log('Рассылка завершена')
             await message.answer(
@@ -85,13 +88,15 @@ async def mail_on(message: types.Message, state: FSMContext):
                 await dp.bot.send_video(
                     chat_id=user.user_id,
                     video=message.video.file_id,
-                    caption=message.html_text if message.caption else None
+                    caption=message.html_text if message.caption else None,
+                    parse_mode='MarkdownV2'
                 )
                 add_log(f'Send message to {user.user_id}')
 
                 await sleep(0.33)
-            except Exception:
-                pass
+            except Exception as e:
+                add_log(str(e))
+                # pass
         else:
             add_log('Рассылка завершена')
 
@@ -105,13 +110,14 @@ async def mail_on(message: types.Message, state: FSMContext):
                 await dp.bot.send_animation(
                     chat_id=user.user_id,
                     animation=message.animation.file_id,
-                    caption=message.html_text if message.caption else None
+                    caption=message.html_text if message.caption else None,
+                    parse_mode='MarkdownV2'
                 )
                 add_log(f'Send message to {user.user_id}')
 
                 await sleep(0.33)
-            except Exception:
-                pass
+            except Exception as e:
+                add_log(str(e))
         else:
             add_log('Рассылка завершена')
 

@@ -1,3 +1,4 @@
+import sqlalchemy.exc
 from sqlalchemy.exc import IntegrityError
 
 from .database import session
@@ -6,9 +7,12 @@ from datetime import datetime
 
 
 def register_user(user_id: int, name, is_admin: bool):
-    data = find_user(user_id)
+    try:
+        data = find_user(user_id)
+    except sqlalchemy.exc.PendingRollbackError:
+        session.rollback()
+        return register_user(user_id, name, is_admin)
     if data:
-        print(data)
         data.nickname = name
     else:
         user = User(
@@ -53,7 +57,11 @@ def select_admins():
 
 
 def set_admin(id):
-    user = session.query(User).filter_by(user_id=id).first()
+    try:
+        user = session.query(User).filter_by(user_id=id).first()
+    except sqlalchemy.exc.PendingRollbackError:
+        session.rollback()
+        return set_admin(id)
     if user is not None:
         user.is_admin = True
     else:
@@ -67,7 +75,11 @@ def set_admin(id):
 
 
 def delete_admin(id):
-    user = session.query(User).filter_by(user_id=id).first()
+    try:
+        user = session.query(User).filter_by(user_id=id).first()
+    except sqlalchemy.exc.PendingRollbackError:
+        session.rollback()
+        return delete_admin(id)
     user.is_admin = False
     try:
         session.commit()

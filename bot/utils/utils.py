@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 
-dotenv_path = join(dirname(__file__), '.env')
+dotenv_path = join(dirname(__file__), '../data/.env')
 load_dotenv(dotenv_path)
 SERVER = os.environ.get('SERVER')
 USERNAME = os.environ.get('FTP_USERNAME_CONNECT')

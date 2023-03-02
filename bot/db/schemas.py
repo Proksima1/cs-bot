@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, DATETIME, String
+from sqlalchemy import Column, Integer, Boolean, DATETIME, String, VARCHAR
 
 from .database import Base
 
@@ -8,7 +8,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, unique=True)
-    nickname = Column(String)
+    nickname = Column(VARCHAR(100))
     is_admin = Column(Boolean)
 
 
@@ -17,4 +17,4 @@ class Log(Base):
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DATETIME)
-    message = Column(String)
+    message = Column(VARCHAR(1000))

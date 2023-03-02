@@ -1,21 +1,16 @@
 import asyncio
 
-import aiohttp
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import CommandStart
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.exceptions import BotBlocked
-from bs4 import BeautifulSoup
 from data import *
+from db.sql_commands import *
 from loader import dp, client, bot
 from states import VipPurchase
 from utils import *
-from db.sql_commands import *
 
-
-
-ADMINS = []
 back_button = InlineKeyboardButton("⬅️ Назад", callback_data='go_back')
 
 
@@ -30,7 +25,6 @@ async def send_welcome(message: types.Message):
     name = f
     if s is not None:
         name += f' {s}'
-    print(name)
     register_user(message.from_user.id, name, False)
     buttons_row = InlineKeyboardMarkup()
     yes_button = InlineKeyboardButton('Да', callback_data='yes')
@@ -49,7 +43,8 @@ async def send_welcome(message: types.Message):
 async def yes_button_clicked(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
     try:
-        await bot.send_message(callback_query.from_user.id, 'Тогда напиши его мне и произведи оплату :)')
+        kb = InlineKeyboardMarkup().add(InlineKeyboardButton('⬅️ Назад', callback_data='back_to_main'))
+        await callback_query.message.answer('Тогда напиши его мне и произведи оплату :)', reply_markup=kb)
         await VipPurchase.wait_for_steam_id.set()
     except BotBlocked:
         pass
@@ -59,9 +54,10 @@ async def yes_button_clicked(callback_query: types.CallbackQuery):
 async def no_button_clicked(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
     try:
-        await bot.send_message(callback_query.from_user.id, 'Зайди на сервер, напиши в консоль <code>status</code>. '
-                                                            'Твой SteamID будет в формате [U:х:ххххххх] - это то, что нужно.'
-                                                            'Пришли его сюда', parse_mode='html')
+        kb = InlineKeyboardMarkup().add(InlineKeyboardButton('⬅️ Назад', callback_data='back_to_main'))
+        await callback_query.message.answer('Зайди на сервер, напиши в консоль <code>status</code>. '
+                                            'Твой SteamID будет в формате [U:х:ххххххх] - это то, что нужно.'
+                                            'Пришли его сюда', parse_mode='html', reply_markup=kb)
         await VipPurchase.wait_for_steam_id.set()
     except BotBlocked:
         pass
@@ -72,13 +68,16 @@ async def get_steam_id(message: types.Message, state: FSMContext):
     data = await search_for_steam_id(message.text, search_steam_id_error)
     if data['status'] == 'error':
         await message.answer(data['error'])
-        for admin in ADMINS:
+        admins = select_admins()
+        for admin in admins:
             await bot.send_message(admin, '<b>Ошибка при работе бота!\nС сайтом steamid проблема</b>',
                                    parse_mode='html')
     else:
         steam_id = data['text']
+        print(data)
         if steam_id != '0':
             s = await async_generate_random_string(10)
+            print(s)
             buttons_row = InlineKeyboardMarkup()
             async with Quickpay(
                     receiver=PAYMENT_RECEIVER,
@@ -88,6 +87,7 @@ async def get_steam_id(message: types.Message, state: FSMContext):
                     label=s,
                     sum=VIP_COST,
             ) as quickpay:
+                print(quickpay)
                 async with state.proxy() as data:
                     data['steam_id'] = steam_id
                     data['label'] = s
