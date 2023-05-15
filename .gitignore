@@ -3,5 +3,4 @@
 *.pyc
 .env
 *.pyc
-test.py
 *.json
