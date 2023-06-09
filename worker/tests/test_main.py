@@ -1,5 +1,10 @@
-import unittest
+import pytest
+import sys
+sys.path.append('..')
+from worker import getDiff
 
 
-class MainTestCase(unittest.TestCase):
-    def set
+def test_getDiff():
+    data = getDiff('files/prev.txt', 'files/curr.txt')
+    # print(data)
+    assert len(data) == 6
